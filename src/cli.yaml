@@ -1,0 +1,14 @@
+name: semver
+version: "0.1.0-dev.1"
+author: Lou Marvin Caraig <loumarvincaraig@gmail.com>
+about: CLI to bump and check versions according to semver
+subcommands:
+    - hello:
+        about: Greet the user
+    - validate:
+        about: Checks if the provided version is semver compliant
+        args:
+            - version:
+                value_name: VERSION
+                about: Version to check
+                required: true
