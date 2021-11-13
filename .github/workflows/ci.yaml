@@ -154,7 +154,7 @@ jobs:
         run: |
           set -e
           mkdir -p target/bins/${{ matrix.os }}
-          cp target/${{ matrix.os }}/release/rs target/bins/${{ matrix.os }}
+          cp target/${{ matrix.os }}/release/semver target/bins/${{ matrix.os }}
           tar -czvf ${{ matrix.os }}.tar.gz target/bins/${{ matrix.os }}/
           set +e
       - name: Release
