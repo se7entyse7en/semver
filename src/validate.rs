@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use regex::Regex;
 
 // Ref: https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
