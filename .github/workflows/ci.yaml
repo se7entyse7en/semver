@@ -1,0 +1,170 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  GIT_USER: ${{ secrets.GIT_USER }}
+  GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  check-and-lint:
+    name: Check and Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      - name: Rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+      - name: Clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-targets --all-features -- -D warnings
+
+  test:
+    name: Test on ${{ matrix.os }}
+    needs: [check-and-lint]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
+
+  tag:
+    name: Tag
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: (github.event_name != 'pull_request') && (github.ref == 'refs/heads/master')
+    outputs:
+      version: ${{ steps.bump_version.outputs.tag_version }}
+      prerelease: ${{ steps.bump_version.outputs.prerelease }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install bumpversion
+        run: pip install bumpversion
+      - name: Setup git
+        run: |
+          set -e
+          git config --global user.name "${GIT_USER}"
+          git config --global user.email "${GIT_EMAIL}"
+          git remote remove origin
+          git remote add origin "https://$(echo ${GITHUB_REPOSITORY} | cut -d "/" -f1):${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          set +e
+      - name: Bump version
+        id: bump_version
+        run: |
+          set -e
+          tags=$(git tag | wc -l)
+          if [ "$tags" -eq "0" ]; then
+            current_version="0.0.0"
+            echo "No tags available, bumping version ${current_version}!"
+            echo "::set-output name=tag_version::${current_version}"
+            echo "::set-output name=prerelease::false"
+          else
+            current_version=$(bumpversion --dry-run --list patch | grep current_version | cut -c 17-)          
+            latest_tag=$(git describe --tags --abbrev=0)
+            if [ "v${current_version}" != "${latest_tag}" ]; then
+              echo "Found new bumped version ${current_version}!"
+              echo "::set-output name=tag_version::${current_version}"
+              echo "::set-output name=prerelease::false"
+            else
+              current_is_dev=$(echo "${current_version}" | grep dev)
+              if [ "${current_is_dev}" == "" ]; then
+                new_version=$(bumpversion --dry-run --list dev | grep new_version | cut -c 13-)
+              else
+                new_version=$(bumpversion --dry-run --list dev --current-version $(bumpversion --dry-run --list minor | grep new_version | cut -c 13-) | grep new_version | cut -c 13-)
+              fi
+              echo "No new version found: bumping current one as a dev version: ${new_version}"
+              make bump-dev
+              echo "::set-output name=tag_version::${new_version}"
+              echo "::set-output name=prerelease::true"
+            fi
+          fi
+          set +e
+      - name: Create Tag
+        run: make tag TAG="${{steps.bump_version.outputs.tag_version}}"
+      - name: Publish Branch and Tag
+        run: git push origin master && git push origin --tags
+
+  build-and-release:
+    name: Build and Release Binaries for ${{ matrix.os }}
+    needs: [tag]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          # TODO: the "Archive" step doesn't work for Windows
+          # - os: windows-latest
+    if: (github.event_name != 'pull_request') && (github.ref == 'refs/heads/master')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features --target-dir target/${{ matrix.os }}
+      - name: Archive
+        run: |
+          set -e
+          mkdir -p target/bins/${{ matrix.os }}
+          cp target/${{ matrix.os }}/release/rs target/bins/${{ matrix.os }}
+          tar -czvf ${{ matrix.os }}.tar.gz target/bins/${{ matrix.os }}/
+          set +e
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: ${{ needs.tag.outputs.prerelease }}
+          files: ${{ matrix.os }}.tar.gz
+          tag_name: v${{ needs.tag.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ env.GITHUB_REPOSITORY }}
+
