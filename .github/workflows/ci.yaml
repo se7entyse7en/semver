@@ -108,9 +108,9 @@ jobs:
             else
               current_is_dev=$(echo "${current_version}" | grep dev)
               if [ "${current_is_dev}" == "" ]; then
-                new_version=$(bumpversion --dry-run --list dev | grep new_version | cut -c 13-)
+                new_version=$(bumpversion --dry-run --list dev --no-configured-files --current-version $(bumpversion --dry-run --list minor | grep new_version | cut -c 13-) | grep new_version | cut -c 13-)
               else
-                new_version=$(bumpversion --dry-run --list dev --current-version $(bumpversion --dry-run --list minor | grep new_version | cut -c 13-) | grep new_version | cut -c 13-)
+                new_version=$(bumpversion --dry-run --list dev | grep new_version | cut -c 13-)
               fi
               echo "No new version found: bumping current one as a dev version: ${new_version}"
               make bump-dev
