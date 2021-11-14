@@ -12,3 +12,16 @@ subcommands:
                 value_name: VERSION
                 about: Version to check
                 required: true
+    - next:
+        about: Computes next version
+        args:
+            - current-version:
+                value_name: CURRENT_VERSION
+                about: Current version from which to compute the next one
+                required: true
+            - part:
+                value_name: PART
+                about: Which part of the version to bump
+                possible_values: [ major, minor, patch ]
+                required: true
+

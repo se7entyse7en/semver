@@ -20,5 +20,20 @@ fn main() {
                 }
             }
         }
+    } else if let Some(matches) = matches.subcommand_matches("next") {
+        if let Some(current_version) = matches.value_of("current-version") {
+            if let Some(part) = matches.value_of("part") {
+                match semver::next::next(current_version, part) {
+                    Ok(version) => {
+                        println!("Next version: '{}'", version);
+                        std::process::exit(0);
+                    }
+                    Err(err) => {
+                        println!("Error: {:?}", err);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
     }
 }
