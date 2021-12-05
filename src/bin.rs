@@ -35,5 +35,19 @@ fn main() {
                 }
             }
         }
+    } else if let Some(matches) = matches.subcommand_matches("bump") {
+        let current_version = matches.value_of("current-version").unwrap();
+        let part = matches.value_of("part").unwrap();
+        let file = matches.value_of("file").unwrap();
+        match semver::bump::bump(current_version, part, file) {
+            Ok(version) => {
+                println!("Bumped to version: '{}'", version);
+                std::process::exit(0);
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+                std::process::exit(1);
+            }
+        }
     }
 }
