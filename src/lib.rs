@@ -1,3 +1,4 @@
+pub mod bump;
 pub mod core;
 pub mod next;
 pub mod validate;
