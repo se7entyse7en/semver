@@ -82,16 +82,16 @@ jobs:
         run: pip install bumpversion
       - name: Setup git
         run: |
-          set -e
+          set -eo pipefail
           git config --global user.name "${GIT_USER}"
           git config --global user.email "${GIT_EMAIL}"
           git remote remove origin
           git remote add origin "https://$(echo ${GITHUB_REPOSITORY} | cut -d "/" -f1):${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          set +e
+          set +eo pipefail
       - name: Bump version
         id: bump_version
         run: |
-          set -e
+          set -eo pipefail
           tags=$(git tag | wc -l)
           if [ "$tags" -eq "0" ]; then
             current_version="0.0.0"
@@ -99,7 +99,7 @@ jobs:
             echo "::set-output name=tag_version::${current_version}"
             echo "::set-output name=prerelease::false"
           else
-            current_version=$(bumpversion --dry-run --list patch | grep current_version | cut -c 17-)          
+            current_version=$(bumpversion --dry-run --list patch | grep current_version | cut -c 17-)
             latest_tag=$(git describe --tags --abbrev=0)
             if [ "v${current_version}" != "${latest_tag}" ]; then
               echo "Found new bumped version ${current_version}!"
@@ -118,7 +118,7 @@ jobs:
               echo "::set-output name=prerelease::true"
             fi
           fi
-          set +e
+          set +eo pipefail
       - name: Create Tag
         run: make tag TAG="${{steps.bump_version.outputs.tag_version}}"
       - name: Publish Branch and Tag
@@ -152,11 +152,11 @@ jobs:
           args: --release --all-features --target-dir target/${{ matrix.os }}
       - name: Archive
         run: |
-          set -e
+          set -eo pipefail
           mkdir -p target/bins/${{ matrix.os }}
           cp target/${{ matrix.os }}/release/semver target/bins/${{ matrix.os }}
           tar -czvf ${{ matrix.os }}.tar.gz target/bins/${{ matrix.os }}/
-          set +e
+          set +eo pipefail
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -167,4 +167,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ env.GITHUB_REPOSITORY }}
-
