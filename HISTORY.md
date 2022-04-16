@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [v0.1.0 - 2022-04-16](https://github.com/se7entyse7en/semver/compare/v0.0.0...v0.1.0)
+
 ### Added
 
 - Added `hello` subcommand
