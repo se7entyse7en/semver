@@ -38,8 +38,8 @@ struct NextArgs {
     #[clap(short = 'v', long)]
     current_version: Option<String>,
     /// Which part of the version to bump
-    #[clap(short, long)]
-    part: Option<String>, // TODO: Make `part` an `enum` in `core`
+    #[clap(arg_enum, short, long)]
+    part: Option<sv::core::Part>,
     /// Path of the configuration file
     #[clap(short, long)]
     config: Option<String>,
@@ -51,8 +51,8 @@ struct BumpArgs {
     #[clap(short = 'v', long)]
     current_version: Option<String>,
     /// Which part of the version to bump
-    #[clap(short, long)]
-    part: Option<String>,
+    #[clap(arg_enum, short, long)]
+    part: Option<sv::core::Part>,
     /// File containing the version to bump
     #[clap(short, long)]
     file: Option<String>,
@@ -63,12 +63,12 @@ struct BumpArgs {
 
 struct FinalizedNextArgs {
     current_version: String,
-    part: String,
+    part: sv::core::Part,
 }
 
 struct FinalizedBumpArgs {
     current_version: String,
-    part: String,
+    part: sv::core::Part,
     files: Vec<String>,
 }
 
