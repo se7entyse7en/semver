@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod tests;
-
 use crate::validate;
+use clap::ArgEnum;
 use regex::{self, Regex};
+use serde::Deserialize;
 use std::{fmt, str};
 
 const SUPPORTED_PATTERN: &str =
@@ -12,7 +13,24 @@ const SUPPORTED_PATTERN: &str =
 pub enum VersionError {
     InvalidVersion(String),
     UnsupportedVersion(String),
-    InvalidPart(String),
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, ArgEnum, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Part {
+    Major,
+    Minor,
+    Patch,
+}
+
+impl fmt::Display for Part {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Major => write!(f, "major"),
+            Self::Minor => write!(f, "minor"),
+            Self::Patch => write!(f, "patch"),
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -41,8 +59,20 @@ impl Version {
         }
     }
 
-    fn extract_part(caps: &regex::Captures, part: &str) -> usize {
-        caps.name(part).unwrap().as_str().parse::<usize>().unwrap()
+    fn extract_part(caps: &regex::Captures, part: &Part) -> usize {
+        caps.name(&part.to_string())
+            .unwrap()
+            .as_str()
+            .parse::<usize>()
+            .unwrap()
+    }
+
+    pub fn bump(&self, part: &Part) -> Self {
+        match part {
+            Part::Major => self.bump_major(),
+            Part::Minor => self.bump_minor(),
+            Part::Patch => self.bump_patch(),
+        }
     }
 
     pub fn bump_major(&self) -> Self {
@@ -72,9 +102,9 @@ impl str::FromStr for Version {
                 let caps = re.captures(raw_version).unwrap();
 
                 Ok(Self::with_values(
-                    Self::extract_part(&caps, "major"),
-                    Self::extract_part(&caps, "minor"),
-                    Self::extract_part(&caps, "patch"),
+                    Self::extract_part(&caps, &Part::Major),
+                    Self::extract_part(&caps, &Part::Minor),
+                    Self::extract_part(&caps, &Part::Patch),
                 ))
             }
         }

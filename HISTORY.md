@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The `--part` cmd arg is now checked against the set of possible values instead of being an arbitrary string
+
 ## [v0.1.0 - 2022-04-16](https://github.com/se7entyse7en/semver/compare/v0.0.0...v0.1.0)
 
 ### Added

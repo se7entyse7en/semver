@@ -22,7 +22,11 @@ impl From<io::Error> for BumpError {
     }
 }
 
-pub fn bump(version: &str, part: &str, file_paths: &[String]) -> Result<core::Version, BumpError> {
+pub fn bump(
+    version: &str,
+    part: &core::Part,
+    file_paths: &[String],
+) -> Result<core::Version, BumpError> {
     let new_version = next::next(version, part)?;
     let mut res: Vec<Result<(), BumpError>> = vec![];
     for file_path in file_paths {

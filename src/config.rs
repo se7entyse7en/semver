@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests;
+use crate::core;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -14,7 +15,7 @@ struct WrapperRawConfig {
 #[derive(Deserialize, Debug)]
 struct RawConfig {
     current_version: String,
-    default_part: String,
+    default_part: core::Part,
     files: Option<HashMap<String, FileConfig>>,
 }
 
@@ -24,7 +25,7 @@ pub struct FileConfig {}
 pub struct Config {
     pub path: Option<String>,
     pub current_version: String,
-    pub default_part: String,
+    pub default_part: core::Part,
     pub files: HashMap<String, FileConfig>,
 }
 

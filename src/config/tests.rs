@@ -1,4 +1,5 @@
 use super::Config;
+use crate::core::Part;
 use std::str::FromStr;
 
 #[test]
@@ -21,7 +22,7 @@ default_part = "minor"
     .unwrap();
 
     assert_eq!(config.current_version, "1.0.0");
-    assert_eq!(config.default_part, "minor");
+    assert_eq!(config.default_part, Part::Minor);
     assert_eq!(config.path, None);
 
     let mut files: Vec<String> = config.files.into_keys().collect();
@@ -90,7 +91,7 @@ default_part = "minor"
 
     for config in [config_1, config_2] {
         assert_eq!(config.current_version, "1.0.0");
-        assert_eq!(config.default_part, "minor");
+        assert_eq!(config.default_part, Part::Minor);
         assert_eq!(config.path, None);
 
         let actual_files: Vec<String> = config.files.into_keys().collect();
