@@ -1,5 +1,5 @@
-use super::{v1, v2, v3};
 use crate::core::{CorePart, ExtensionPart, Version, VersionError};
+use crate::tests::{v1, v2, v3};
 
 #[test]
 fn test_init() {

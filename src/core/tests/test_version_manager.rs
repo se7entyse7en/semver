@@ -1,5 +1,5 @@
-use super::{v1, v2, v3};
 use crate::core::{BumpError, CorePart, ExtensionPart, Part, Version, VersionManager};
+use crate::tests::{v1, v2, v3};
 
 struct TestCaseBump {
     version: Version,
