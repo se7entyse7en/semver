@@ -15,6 +15,7 @@ struct WrapperRawConfig {
 #[derive(Deserialize, Debug)]
 struct RawConfig {
     current_version: String,
+    last_stable_version: Option<String>,
     default_part: String,
     files: Option<HashMap<String, FileConfig>>,
     prerelease: Option<PrereleaseConfig>,
@@ -31,6 +32,7 @@ pub struct PrereleaseConfig {
 pub struct Config {
     pub path: Option<String>,
     pub current_version: String,
+    pub last_stable_version: Option<String>,
     pub default_part: core::Part,
     pub files: HashMap<String, FileConfig>,
     pub bump_prerelease_func: Option<String>,
@@ -40,6 +42,7 @@ impl From<WrapperRawConfig> for Config {
     fn from(wrapper_config: WrapperRawConfig) -> Self {
         Config {
             current_version: wrapper_config.semver.current_version,
+            last_stable_version: wrapper_config.semver.last_stable_version,
             // TODO: Avoid `unwrap`
             default_part: core::Part::from_str(&wrapper_config.semver.default_part).unwrap(),
             files: wrapper_config
