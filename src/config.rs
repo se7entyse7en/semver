@@ -15,29 +15,41 @@ struct WrapperRawConfig {
 #[derive(Deserialize, Debug)]
 struct RawConfig {
     current_version: String,
-    default_part: core::Part,
+    default_part: String,
     files: Option<HashMap<String, FileConfig>>,
+    prerelease: Option<PrereleaseConfig>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct FileConfig {}
+
+#[derive(Deserialize, Debug)]
+pub struct PrereleaseConfig {
+    bump_script: String,
+}
 
 pub struct Config {
     pub path: Option<String>,
     pub current_version: String,
     pub default_part: core::Part,
     pub files: HashMap<String, FileConfig>,
+    pub bump_prerelease_func: Option<String>,
 }
 
 impl From<WrapperRawConfig> for Config {
     fn from(wrapper_config: WrapperRawConfig) -> Self {
         Config {
             current_version: wrapper_config.semver.current_version,
-            default_part: wrapper_config.semver.default_part,
+            // TODO: Avoid `unwrap`
+            default_part: core::Part::from_str(&wrapper_config.semver.default_part).unwrap(),
             files: wrapper_config
                 .semver
                 .files
                 .map_or(HashMap::new(), |files| files),
+            bump_prerelease_func: wrapper_config
+                .semver
+                .prerelease
+                .map(|prerel| prerel.bump_script),
             path: None,
         }
     }

@@ -2,9 +2,19 @@
 
 ## Unreleased
 
+### Added
+
+- Added support for prereleases (`bump --new-prerelease/--finalize-prerelease`) with the ability to specify in the configuration the JS code for bumping the prerelease part
+
 ### Changed
 
+- The `validate` subcommand supports prereleases
 - The `--part` cmd arg is now checked against the set of possible values instead of being an arbitrary string
+
+### Removed
+
+- Removed `next` subcommand
+- Removed `hello` subcommand
 
 ## [v0.1.0 - 2022-04-16](https://github.com/se7entyse7en/semver/compare/v0.0.0...v0.1.0)
 

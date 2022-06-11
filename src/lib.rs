@@ -1,9 +1,7 @@
-pub mod bump;
+pub mod cmd;
 pub mod config;
 pub mod core;
-pub mod next;
-pub mod validate;
+pub mod file;
 
-pub fn hello() {
-    println!("Hello from semver!");
-}
+#[cfg(test)]
+pub mod tests;
