@@ -43,6 +43,7 @@ pub struct FinalizedBumpArgs {
     pub finalize_prerelease: bool,
     pub bump_prerelease_func: Option<Box<dyn core::ExtensionBumpFunc>>,
     pub files: Vec<String>,
+    pub original_config: Option<config::Config>,
 }
 
 impl helpers::FinalizeArgs for BumpArgs {
@@ -61,6 +62,7 @@ impl helpers::FinalizeArgs for BumpArgs {
     }
 
     fn finalize_from_config(&self, config: config::Config) -> Self::FinalizedArgs {
+        let original_config = config.clone();
         FinalizedBumpArgs {
             current_version: config.current_version,
             part: self.part.to_owned().unwrap_or(config.default_part),
@@ -70,6 +72,7 @@ impl helpers::FinalizeArgs for BumpArgs {
             bump_prerelease_func: config
                 .bump_prerelease_func
                 .map(|code| helpers::build_bump_func(code).unwrap()),
+            original_config: Some(original_config),
         }
     }
 
@@ -86,6 +89,7 @@ impl helpers::FinalizeArgs for BumpArgs {
                 finalize_prerelease: self.finalize_prerelease,
                 files: vec![file.to_owned()],
                 bump_prerelease_func: None,
+                original_config: None,
             }),
             _ => None,
         }

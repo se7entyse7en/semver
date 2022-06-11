@@ -1,18 +1,18 @@
 #[cfg(test)]
 mod tests;
 use crate::core;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::{fmt, fs, io, str};
 use toml;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct WrapperRawConfig {
     semver: RawConfig,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct RawConfig {
     current_version: String,
     last_stable_version: Option<String>,
@@ -21,14 +21,15 @@ struct RawConfig {
     prerelease: Option<PrereleaseConfig>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FileConfig {}
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PrereleaseConfig {
     bump_script: String,
 }
 
+#[derive(Debug, Clone)]
 pub struct Config {
     pub path: Option<String>,
     pub current_version: String,
@@ -36,10 +37,12 @@ pub struct Config {
     pub default_part: core::Part,
     pub files: HashMap<String, FileConfig>,
     pub bump_prerelease_func: Option<String>,
+    raw_config: WrapperRawConfig,
 }
 
 impl From<WrapperRawConfig> for Config {
     fn from(wrapper_config: WrapperRawConfig) -> Self {
+        let raw_config = wrapper_config.clone();
         Config {
             current_version: wrapper_config.semver.current_version,
             last_stable_version: wrapper_config.semver.last_stable_version,
@@ -54,6 +57,7 @@ impl From<WrapperRawConfig> for Config {
                 .prerelease
                 .map(|prerel| prerel.bump_script),
             path: None,
+            raw_config,
         }
     }
 }
@@ -70,12 +74,27 @@ impl str::FromStr for Config {
 impl Config {
     pub fn from_file(file_path: &str) -> Result<Self, ConfigError> {
         let content = fs::read_to_string(file_path)?;
-        Config::from_str(&content)
+        let mut config = Config::from_str(&content)
             .map(|mut config| {
                 config.path = Some(file_path.to_string());
                 config
             })
-            .map_err(ConfigError::from)
+            .map_err(ConfigError::from)?;
+        config.path = Some(file_path.to_owned());
+        Ok(config)
+    }
+
+    pub fn update(self, new_version: &core::Version) -> Result<(), io::Error> {
+        let mut raw_config = self.raw_config;
+        raw_config.semver.last_stable_version = if new_version.prerelease.is_some() {
+            self.last_stable_version.or(Some(self.current_version))
+        } else {
+            Some(new_version.to_string())
+        };
+        raw_config.semver.current_version = new_version.to_string();
+        let serialized_config = toml::to_string_pretty(&raw_config).unwrap();
+        fs::write(self.path.unwrap(), serialized_config)?;
+        Ok(())
     }
 }
 
