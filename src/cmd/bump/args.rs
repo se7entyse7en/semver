@@ -61,17 +61,12 @@ impl helpers::FinalizeArgs for BumpArgs {
     }
 
     fn finalize_from_config(&self, config: config::Config) -> Self::FinalizedArgs {
-        let mut files: Vec<String> = config.files.into_keys().collect();
-        if let Some(config_path) = config.path {
-            files.push(config_path);
-        }
-
         FinalizedBumpArgs {
             current_version: config.current_version,
             part: self.part.to_owned().unwrap_or(config.default_part),
             new_prerelease: self.new_prerelease,
             finalize_prerelease: self.finalize_prerelease,
-            files,
+            files: config.files.into_keys().collect(),
             bump_prerelease_func: config
                 .bump_prerelease_func
                 .map(|code| helpers::build_bump_func(code).unwrap()),
