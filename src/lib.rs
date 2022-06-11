@@ -5,7 +5,3 @@ pub mod file;
 
 #[cfg(test)]
 pub mod tests;
-
-pub fn hello() {
-    println!("Hello from semver!");
-}
