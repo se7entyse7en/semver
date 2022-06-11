@@ -16,7 +16,13 @@ pub fn bump(args: &BumpArgs) {
             ) {
                 Ok(version) => {
                     println!("Bumped to version: '{}'", version);
-                    std::process::exit(0);
+                    match config.original_config.unwrap().update(&version) {
+                        Ok(()) => std::process::exit(0),
+                        Err(err) => {
+                            println!("Error updating the configuration file: {:?}", err);
+                            std::process::exit(2);
+                        }
+                    };
                 }
                 Err(err) => {
                     println!("Error: {:?}", err);

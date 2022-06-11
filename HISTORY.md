@@ -5,6 +5,7 @@
 ### Added
 
 - Added support for prereleases (`bump --new-prerelease/--finalize-prerelease`) with the ability to specify in the configuration the JS code for bumping the prerelease part
+- The config file keeps track also of the latest stable (non-prerelease) version
 
 ### Changed
 

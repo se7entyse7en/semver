@@ -8,6 +8,7 @@ fn test_config() {
         r#"
 [semver]
 current_version = "1.0.0"
+last_stable_version = "1.0.0"
 default_part = "minor"
 
   [semver.files]
@@ -74,6 +75,7 @@ fn test_config_no_files() {
         r#"
 [semver]
 current_version = "1.0.0"
+last_stable_version = "1.0.0"
 default_part = "minor"
 "#,
     )
@@ -83,6 +85,7 @@ default_part = "minor"
         r#"
 [semver]
 current_version = "1.0.0"
+last_stable_version = "1.0.0"
 default_part = "minor"
 
   [semver.files]
@@ -109,6 +112,7 @@ fn test_config_with_prerelease() {
         r#"
 [semver]
 current_version = "1.0.0"
+last_stable_version = "1.0.0"
 default_part = "minor"
 
   [semver.files]
