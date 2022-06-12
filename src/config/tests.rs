@@ -1,4 +1,4 @@
-use super::Config;
+use super::{Config, FileConfig};
 use crate::core::{CorePart, Part};
 use std::str::FromStr;
 
@@ -11,13 +11,15 @@ current_version = "1.0.0"
 last_stable_version = "1.0.0"
 default_part = "minor"
 
-  [semver.files]
+[semver.files]
 
-    [semver.files."test-1.txt"]
+[semver.files."test-1.txt"]
 
-    [semver.files."test-2.txt"]
+[semver.files."test-2.txt"]
 
-    [semver.files."test-3.txt"]
+[semver.files."test-3.txt"]
+search = "library = {current_version}"
+replace = "library = {new_version}"
 "#,
     )
     .unwrap();
@@ -27,9 +29,30 @@ default_part = "minor"
     assert_eq!(config.path, None);
     assert_eq!(config.bump_prerelease_func, None);
 
-    let mut files: Vec<String> = config.files.into_keys().collect();
+    let mut files: Vec<String> = config.files.keys().cloned().collect();
     files.sort_unstable();
     assert_eq!(files, ["test-1.txt", "test-2.txt", "test-3.txt"]);
+    assert_eq!(
+        config.files.get("test-1.txt"),
+        Some(&FileConfig {
+            search: None,
+            replace: None,
+        })
+    );
+    assert_eq!(
+        config.files.get("test-2.txt"),
+        Some(&FileConfig {
+            search: None,
+            replace: None,
+        })
+    );
+    assert_eq!(
+        config.files.get("test-3.txt"),
+        Some(&FileConfig {
+            search: Some("library = {current_version}".to_owned()),
+            replace: Some("library = {new_version}".to_owned()),
+        })
+    );
 }
 
 #[test]
@@ -39,13 +62,15 @@ fn test_config_error() {
 [semver]
 default_part = "minor"
 
-  [semver.files]
+[semver.files]
 
-    [semver.files."test-1.txt"]
+[semver.files."test-1.txt"]
 
-    [semver.files."test-2.txt"]
+[semver.files."test-2.txt"]
 
-    [semver.files."test-3.txt"]
+[semver.files."test-3.txt"]
+search = "library = {current_version}"
+replace = "library = {new_version}"
 "#,
     );
 
@@ -54,13 +79,15 @@ default_part = "minor"
 [semver]
 current_version = "1.0.0"
 
-  [semver.files]
+[semver.files]
 
-    [semver.files."test-1.txt"]
+[semver.files."test-1.txt"]
 
-    [semver.files."test-2.txt"]
+[semver.files."test-2.txt"]
 
-    [semver.files."test-3.txt"]
+[semver.files."test-3.txt"]
+search = "library = {current_version}"
+replace = "library = {new_version}"
 "#,
     );
 
@@ -88,7 +115,7 @@ current_version = "1.0.0"
 last_stable_version = "1.0.0"
 default_part = "minor"
 
-  [semver.files]
+[semver.files]
 "#,
     )
     .unwrap();
@@ -115,16 +142,18 @@ current_version = "1.0.0"
 last_stable_version = "1.0.0"
 default_part = "minor"
 
-  [semver.files]
+[semver.files]
 
-    [semver.files."test-1.txt"]
+[semver.files."test-1.txt"]
 
-    [semver.files."test-2.txt"]
+[semver.files."test-2.txt"]
 
-    [semver.files."test-3.txt"]
+[semver.files."test-3.txt"]
+search = "library = {current_version}"
+replace = "library = {new_version}"
 
-  [semver.prerelease]
-  bump_script = '''
+[semver.prerelease]
+bump_script = '''
 var PREFIX = "dev.";
 function bump(version) {
   var counter = !version.prerelease ? 0 : parseInt(version.prerelease.slice(PREFIX.length));
@@ -151,7 +180,28 @@ function bump(version) {
         )
     );
 
-    let mut files: Vec<String> = config.files.into_keys().collect();
+    let mut files: Vec<String> = config.files.keys().cloned().collect();
     files.sort_unstable();
     assert_eq!(files, ["test-1.txt", "test-2.txt", "test-3.txt"]);
+    assert_eq!(
+        config.files.get("test-1.txt"),
+        Some(&FileConfig {
+            search: None,
+            replace: None,
+        })
+    );
+    assert_eq!(
+        config.files.get("test-2.txt"),
+        Some(&FileConfig {
+            search: None,
+            replace: None,
+        })
+    );
+    assert_eq!(
+        config.files.get("test-3.txt"),
+        Some(&FileConfig {
+            search: Some("library = {current_version}".to_owned()),
+            replace: Some("library = {new_version}".to_owned()),
+        })
+    );
 }

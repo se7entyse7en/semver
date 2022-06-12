@@ -21,8 +21,33 @@ struct RawConfig {
     prerelease: Option<PrereleaseConfig>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct FileConfig {}
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub struct FileConfig {
+    pub search: Option<String>,
+    pub replace: Option<String>,
+}
+
+impl Default for FileConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FileConfig {
+    pub fn new() -> Self {
+        FileConfig {
+            search: None,
+            replace: None,
+        }
+    }
+
+    pub fn with_params(search: String, replace: String) -> Self {
+        FileConfig {
+            search: Some(search),
+            replace: Some(replace),
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PrereleaseConfig {
