@@ -1,5 +1,7 @@
-use super::{replace_version_in_files, FileBumpError};
-use crate::core;
+use super::{replace_files_contents, FileBumpError};
+use std::collections::HashMap;
+
+use crate::{config, core};
 use std::fs;
 use std::io::{self};
 use std::path::PathBuf;
@@ -34,88 +36,166 @@ where
 }
 
 #[test]
-fn test_replace_version_no_files() {
+fn test_replace_files_contents_no_files() {
     let current_version = core::Version::with_values(1, 2, 3, None);
     let new_version = core::Version::with_values(4, 5, 6, None);
-    let file_paths = vec![];
+    let last_stable_version = core::Version::with_values(1, 2, 3, None);
+
+    let files = HashMap::new();
     assert_eq!(
-        replace_version_in_files(&current_version, &new_version, &file_paths),
+        replace_files_contents(
+            &current_version,
+            &new_version,
+            Some(&last_stable_version),
+            &files
+        ),
         Ok(())
     );
 }
 
 #[test]
-fn test_replace_version_current_version_equal_new_version() {
-    let current_version = core::Version::with_values(1, 2, 3, None);
-    let new_version = core::Version::with_values(1, 2, 3, None);
-    let file_paths = vec![];
-    assert_eq!(
-        replace_version_in_files(&current_version, &new_version, &file_paths),
-        Err(FileBumpError::NoOp(format!(
-            "New version is equal to current version: {}",
-            current_version
-        )))
-    );
-}
-
-#[test]
-fn test_replace_version_some_file_version_not_found() {
-    let func_name = "test_replace_version_some_file_version_not_found";
+fn test_replace_files_contents_version_not_found() {
+    let func_name = "test_replace_files_contents_version_not_found";
     with_test_dir(func_name, |test_dir_name| {
         let current_version = core::Version::with_values(1, 2, 3, None);
         let new_version = core::Version::with_values(1, 2, 3, Some("dev.1".to_owned()));
+        let last_stable_version = core::Version::with_values(1, 2, 3, None);
         let wrong_version = core::Version::with_values(4, 5, 6, None);
-        let file_paths = vec![
-            create_versioned_file(test_dir_name, "file-1", &current_version.to_string()).unwrap(),
-            create_versioned_file(test_dir_name, "file-2", &wrong_version.to_string()).unwrap(),
-            create_versioned_file(test_dir_name, "file-3", &current_version.to_string()).unwrap(),
-        ];
+        let file_paths = HashMap::from([
+            (
+                "file-1",
+                create_versioned_file(test_dir_name, "file-1", &current_version.to_string())
+                    .unwrap(),
+            ),
+            (
+                "file-2",
+                create_versioned_file(test_dir_name, "file-2", &wrong_version.to_string()).unwrap(),
+            ),
+            (
+                "file-3",
+                create_versioned_file(test_dir_name, "file-3", &current_version.to_string())
+                    .unwrap(),
+            ),
+        ]);
+
+        let mut files = HashMap::new();
+        for val in file_paths.values() {
+            files.insert(val.to_owned(), config::FileConfig::new());
+        }
         assert_eq!(
-            replace_version_in_files(&current_version, &new_version, &file_paths),
+            replace_files_contents(
+                &current_version,
+                &new_version,
+                Some(&last_stable_version),
+                &files
+            ),
             Err(FileBumpError::NoOp(format!(
-                "version '{}' not found in file '{}'",
-                current_version, file_paths[1],
+                "Nothing changed in file '{}'",
+                file_paths.get("file-2").unwrap(),
             )))
         );
     });
 }
 
 #[test]
-fn test_replace_version_some_file_not_exists() {
-    let func_name = "test_replace_version_some_file_not_exists";
+fn test_replace_files_contents_some_file_not_exists() {
+    let func_name = "test_replace_files_contents_some_file_not_exists";
     with_test_dir(func_name, |test_dir_name| {
         let current_version = core::Version::with_values(1, 2, 3, None);
         let new_version = core::Version::with_values(1, 2, 3, Some("dev.1".to_owned()));
-        let file_paths = vec![
-            create_versioned_file(test_dir_name, "file-1", &current_version.to_string()).unwrap(),
-            format!("{}/{}", test_dir_name, "test-file_file-2"),
-            create_versioned_file(test_dir_name, "file-3", &current_version.to_string()).unwrap(),
-        ];
+        let last_stable_version = core::Version::with_values(1, 2, 3, None);
+        let file_paths = HashMap::from([
+            (
+                "file-1",
+                create_versioned_file(test_dir_name, "file-1", &current_version.to_string())
+                    .unwrap(),
+            ),
+            (
+                "file-2",
+                format!("{}/{}", test_dir_name, "test-file_file-2"),
+            ),
+            (
+                "file-3",
+                create_versioned_file(test_dir_name, "file-3", &current_version.to_string())
+                    .unwrap(),
+            ),
+        ]);
+
+        let mut files = HashMap::new();
+        for val in file_paths.values() {
+            files.insert(val.to_owned(), config::FileConfig::new());
+        }
+
         matches!(
-            replace_version_in_files(&current_version, &new_version, &file_paths).unwrap_err(),
+            replace_files_contents(
+                &current_version,
+                &new_version,
+                Some(&last_stable_version),
+                &files,
+            )
+            .unwrap_err(),
             FileBumpError::Io(_)
         );
     });
 }
 
 #[test]
-fn test_replace_version() {
-    let func_name = "test_replace_version";
+fn test_replace_files_contents() {
+    let func_name = "test_replace_files_contents";
     with_test_dir(func_name, |test_dir_name| {
         let current_version = core::Version::with_values(1, 2, 3, None);
         let new_version = core::Version::with_values(1, 2, 3, Some("dev.1".to_owned()));
-        let file_paths = vec![
-            create_versioned_file(test_dir_name, "file-1", &current_version.to_string()).unwrap(),
-            create_versioned_file(test_dir_name, "file-2", &current_version.to_string()).unwrap(),
-            create_versioned_file(test_dir_name, "file-3", &current_version.to_string()).unwrap(),
-        ];
+        let last_stable_version = core::Version::with_values(1, 2, 3, None);
+        let files = HashMap::from(["file-1", "file-2", "file-3"].map(|f| {
+            (
+                create_versioned_file(test_dir_name, f, &current_version.to_string()).unwrap(),
+                config::FileConfig::new(),
+            )
+        }));
         assert_eq!(
-            replace_version_in_files(&current_version, &new_version, &file_paths),
+            replace_files_contents(
+                &current_version,
+                &new_version,
+                Some(&last_stable_version),
+                &files
+            ),
             Ok(())
         );
-        assert!(file_paths.iter().all(|fp| {
+        assert!(files.keys().all(|fp| {
             let content = fs::read_to_string(fp).unwrap();
-            content.contains(&new_version.to_string())
+            content.contains(&format!("Version: '{}'", &new_version.to_string()))
+        }));
+    });
+}
+
+#[test]
+fn test_replace_files_contents_with_file_config() {
+    let func_name = "test_replace_files_contents_with_file_config";
+    with_test_dir(func_name, |test_dir_name| {
+        let current_version = core::Version::with_values(1, 2, 3, None);
+        let new_version = core::Version::with_values(1, 2, 3, Some("dev.1".to_owned()));
+        let last_stable_version = core::Version::with_values(1, 2, 3, None);
+        let files = HashMap::from(["file-1", "file-2", "file-3"].map(|f| {
+            (
+                create_versioned_file(test_dir_name, f, &current_version.to_string()).unwrap(),
+                config::FileConfig::with_params(
+                    r#"Version: '{current_version}'"#.to_string(),
+                    r"__VERSION__ = '{new_version}'".to_string(),
+                ),
+            )
+        }));
+        assert_eq!(
+            replace_files_contents(
+                &current_version,
+                &new_version,
+                Some(&last_stable_version),
+                &files
+            ),
+            Ok(())
+        );
+        assert!(files.keys().all(|fp| {
+            let content = fs::read_to_string(fp).unwrap();
+            content.contains(&format!("__VERSION__ = '{}'", &new_version.to_string()))
         }));
     });
 }
