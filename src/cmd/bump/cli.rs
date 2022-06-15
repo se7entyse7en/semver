@@ -8,6 +8,7 @@ pub fn bump(args: &BumpArgs) {
         Ok(config) => {
             match do_bump(
                 &config.current_version,
+                config.last_stable_version.as_deref(),
                 &config.part,
                 config.new_prerelease,
                 config.finalize_prerelease,

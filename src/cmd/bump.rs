@@ -1,10 +1,10 @@
 mod args;
 #[cfg(test)]
 mod tests;
-
 use crate::cmd::validate;
-use crate::{core, file};
+use crate::{config, core, file};
 pub use args::{BumpArgs, FinalizedBumpArgs};
+use std::collections::HashMap;
 use std::str::FromStr;
 pub mod cli;
 
@@ -27,24 +27,34 @@ impl From<file::FileBumpError> for GenericBumpError {
 }
 
 pub fn bump(
-    version: &str,
+    current_version: &str,
+    last_stable_version: Option<&str>,
     part: &core::Part,
     new_prerelease: bool,
     finalize_prerelease: bool,
-    file_paths: &[String],
+    files: &HashMap<String, config::FileConfig>,
     bump_prerelease_func: Option<Box<dyn core::ExtensionBumpFunc>>,
 ) -> Result<core::Version, GenericBumpError> {
     let new_version = next_version(
-        version,
+        current_version,
         part,
         new_prerelease,
         finalize_prerelease,
         bump_prerelease_func,
     )?;
 
-    file::replace_version_in_files(&core::Version::from_str(version)?, &new_version, file_paths)
-        .map(|()| new_version)
-        .map_err(GenericBumpError::from)
+    let cv = core::Version::from_str(current_version)?;
+    match last_stable_version.map(core::Version::from_str) {
+        Some(lsv) => match lsv {
+            Ok(v) => file::replace_files_contents(&cv, &new_version, Some(&v), files)
+                .map(|()| new_version)
+                .map_err(GenericBumpError::from),
+            Err(err) => Err(GenericBumpError::from(err)),
+        },
+        None => file::replace_files_contents(&cv, &new_version, None, files)
+            .map(|()| new_version)
+            .map_err(GenericBumpError::from),
+    }
 }
 
 fn next_version(
