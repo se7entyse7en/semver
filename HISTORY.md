@@ -19,6 +19,10 @@
 - Removed `next` subcommand
 - Removed `hello` subcommand
 
+### Fixed
+
+- Fixed logic when bumping by properly resetting the parts "on the right" (e.g. major bump for 1.2.3 is 2.0.0 and not 2.2.3)
+
 ## [v0.1.0 - 2022-04-16](https://github.com/se7entyse7en/semver/compare/v0.0.0...v0.1.0)
 
 ### Added
