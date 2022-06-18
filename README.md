@@ -68,9 +68,9 @@ Let's assume to have a configuration file `semver.toml` whose content is:
 current_version = "1.0.0"
 default_part = "minor"
 
-  [semver.files]
+[semver.files]
 
-    [semver.files."test-1.txt"]
+[semver.files."test-1.txt"]
 ```
 
 We can simply run the followings:
@@ -91,13 +91,39 @@ Through the configuration file you can specify multiple files to bump which is c
 current_version = "1.0.0"
 default_part = "minor"
 
-  [semver.files]
+[semver.files]
 
-    [semver.files."test-1.txt"]
+[semver.files."test-1.txt"]
 
-    [semver.files."test-2.txt"]
+[semver.files."test-2.txt"]
 
-    [semver.files."test-3.txt"]
+[semver.files."test-3.txt"]
+```
+
+The configuration also allows to be more fine-grained into specifying what to search for in a file and how to replace it. For example:
+```
+[semver]
+current_version = "1.0.0"
+default_part = "minor"
+
+[semver.files]
+
+[semver.files."test-1.txt"]
+search = 'MY_LIB = {current_version}'
+replace = 'MY_LIB = {new_version}'
+```
+
+With this configuration the bump of `test-1.txt` will work by looking for `search` and replacing it with `replace`. Both arguments accept variables that will be replaced during the the bump:
+- `current_version`: the version before the bump,
+- `new_version`: the version after the bump,
+- `last_stable_version`: the last stable before the bump,
+- `utc_today_ymd`: current date according to UTC timezone in `%Y-%m-%d` format,
+- `local_today_ymd`: current date according to local timezone in `%Y-%m-%d` format.
+
+Not specifying `search` and `replace` is equivalent to:
+```
+search = '{current_version}'
+replace = {new_version}'
 ```
 
 ## Support for prereleases
@@ -108,12 +134,12 @@ When using the configuration file, it's possible to support prereleases. It requ
 current_version = "1.0.0"
 default_part = "minor"
 
-  [semver.files]
+[semver.files]
 
-    [semver.files."test-1.txt"]
+[semver.files."test-1.txt"]
 
-  [semver.prerelease]
-  bump_script = '''
+[semver.prerelease]
+bump_script = '''
 var PREFIX = "dev.";
 function bump(version) {
   var counter = !version.prerelease ? 0 : parseInt(version.prerelease.slice(PREFIX.length));
