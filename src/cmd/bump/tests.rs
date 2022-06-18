@@ -1,4 +1,5 @@
 use super::{bump, GenericBumpError};
+use crate::config::FileConfig;
 use crate::core::{
     BumpError, CorePart, ExtensionBumpFunc, ExtensionPart, Part, Version, VersionError,
 };
@@ -321,8 +322,9 @@ mod test_with_extension {
     use super::{
         bump, create_versioned_file, get_bump_prerelease_func, get_test_cases_bump,
         get_test_cases_bump_finalize_prerelease, get_test_cases_bump_new_prerelease, with_test_dir,
-        CorePart, Part,
+        CorePart, FileConfig, Part,
     };
+    use std::collections::HashMap;
     use std::fs;
 
     #[test]
@@ -332,13 +334,15 @@ mod test_with_extension {
             for tc in get_test_cases_bump(true) {
                 let version = tc.version.to_string();
                 let file_path = create_versioned_file(test_dir_name, &version).unwrap();
+                let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
                 assert_eq!(
                     bump(
                         &version,
+                        None,
                         &tc.part,
                         false,
                         false,
-                        &[file_path.to_owned()],
+                        &files,
                         Some(get_bump_prerelease_func()),
                     ),
                     tc.expected
@@ -359,13 +363,15 @@ mod test_with_extension {
             for tc in get_test_cases_bump_new_prerelease(true) {
                 let version = tc.version.to_string();
                 let file_path = create_versioned_file(test_dir_name, &version).unwrap();
+                let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
                 assert_eq!(
                     bump(
                         &version,
+                        None,
                         &tc.part,
                         true,
                         false,
-                        &[file_path.to_owned()],
+                        &files,
                         Some(get_bump_prerelease_func()),
                     ),
                     tc.expected
@@ -386,14 +392,16 @@ mod test_with_extension {
             for tc in get_test_cases_bump_finalize_prerelease() {
                 let version = tc.version.to_string();
                 let file_path = create_versioned_file(test_dir_name, &version).unwrap();
+                let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
                 assert_eq!(
                     bump(
                         &version,
+                        None,
                         // TODO: Make `part` argument as non-required
                         &Part::Core(CorePart::Minor),
                         false,
                         true,
-                        &[file_path.to_owned()],
+                        &files,
                         Some(get_bump_prerelease_func()),
                     ),
                     tc.expected
@@ -411,8 +419,9 @@ mod test_with_extension {
 mod test_without_extension {
     use super::{
         bump, create_versioned_file, get_test_cases_bump, get_test_cases_bump_finalize_prerelease,
-        get_test_cases_bump_new_prerelease, with_test_dir, CorePart, Part,
+        get_test_cases_bump_new_prerelease, with_test_dir, CorePart, FileConfig, Part,
     };
+    use std::collections::HashMap;
     use std::fs;
 
     #[test]
@@ -422,15 +431,9 @@ mod test_without_extension {
             for tc in get_test_cases_bump(false) {
                 let version = tc.version.to_string();
                 let file_path = create_versioned_file(test_dir_name, &version).unwrap();
+                let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
                 assert_eq!(
-                    bump(
-                        &version,
-                        &tc.part,
-                        false,
-                        false,
-                        &[file_path.to_owned()],
-                        None
-                    ),
+                    bump(&version, None, &tc.part, false, false, &files, None),
                     tc.expected
                 );
                 let file_content = fs::read_to_string(&file_path).unwrap();
@@ -449,15 +452,9 @@ mod test_without_extension {
             for tc in get_test_cases_bump_new_prerelease(false) {
                 let version = tc.version.to_string();
                 let file_path = create_versioned_file(test_dir_name, &version).unwrap();
+                let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
                 assert_eq!(
-                    bump(
-                        &version,
-                        &tc.part,
-                        true,
-                        false,
-                        &[file_path.to_owned()],
-                        None,
-                    ),
+                    bump(&version, None, &tc.part, true, false, &files, None,),
                     tc.expected
                 );
                 let file_content = fs::read_to_string(&file_path).unwrap();
@@ -476,14 +473,16 @@ mod test_without_extension {
             for tc in get_test_cases_bump_finalize_prerelease() {
                 let version = tc.version.to_string();
                 let file_path = create_versioned_file(test_dir_name, &version).unwrap();
+                let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
                 assert_eq!(
                     bump(
                         &version,
+                        None,
                         // TODO: Make `part` argument as non-required
                         &Part::Core(CorePart::Minor),
                         false,
                         true,
-                        &[file_path.to_owned()],
+                        &files,
                         None,
                     ),
                     tc.expected
@@ -501,8 +500,9 @@ mod test_without_extension {
 mod test_generic_errors {
     use super::{
         bump, create_versioned_file, get_bump_prerelease_func, with_test_dir, CorePart,
-        FileBumpError, GenericBumpError, Part, VersionError,
+        FileBumpError, FileConfig, GenericBumpError, Part, VersionError,
     };
+    use std::collections::HashMap;
     use std::fs;
 
     #[test]
@@ -519,13 +519,15 @@ mod test_generic_errors {
                 let version = tc.0;
                 let part = tc.1;
                 let file_path = create_versioned_file(test_dir_name, version).unwrap();
+                let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
                 matches!(
                     bump(
                         version,
+                        None,
                         part,
                         false,
                         false,
-                        &[file_path.to_owned()],
+                        &files,
                         Some(get_bump_prerelease_func()),
                     )
                     .unwrap_err(),
@@ -546,13 +548,15 @@ mod test_generic_errors {
             let expected_version = "1.0.0";
             let actual_version = "2.0.0";
             let file_path = create_versioned_file(test_dir_name, actual_version).unwrap();
+            let files = HashMap::from([(file_path.to_owned(), FileConfig::new())]);
             matches!(
                 bump(
                     expected_version,
+                    None,
                     &Part::Core(CorePart::Major),
                     false,
                     false,
-                    &[file_path.to_owned()],
+                    &files,
                     Some(get_bump_prerelease_func()),
                 )
                 .unwrap_err(),
@@ -571,13 +575,15 @@ mod test_generic_errors {
         with_test_dir(func_name, |test_dir_name| {
             let expected_version = "1.0.0";
             let file_path = format!("{}/some-random-string-for-missing-test-file", test_dir_name);
+            let files = HashMap::from([(file_path, FileConfig::new())]);
             matches!(
                 bump(
                     expected_version,
+                    None,
                     &Part::Core(CorePart::Major),
                     false,
                     false,
-                    &[file_path],
+                    &files,
                     Some(get_bump_prerelease_func()),
                 )
                 .unwrap_err(),

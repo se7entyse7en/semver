@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
-use crate::core;
+use crate::{config, core, template};
+use std::collections::HashMap;
 use std::{fs, io};
 
 #[derive(Debug)]
@@ -25,47 +26,60 @@ impl PartialEq for FileBumpError {
     }
 }
 
-pub fn replace_version_in_files(
+pub fn replace_files_contents(
     current_version: &core::Version,
     new_version: &core::Version,
-    file_paths: &[String],
+    last_stable_version: Option<&core::Version>,
+    files: &HashMap<String, config::FileConfig>,
 ) -> Result<(), FileBumpError> {
-    if current_version.to_string() == new_version.to_string() {
-        Err(FileBumpError::NoOp(format!(
-            "New version is equal to current version: {}",
-            new_version
-        )))
-    } else {
-        let mut res: Vec<Result<(), FileBumpError>> = vec![];
-        for file_path in file_paths {
-            res.push(replace_version_in_file(
-                current_version,
-                new_version,
-                file_path,
-            ));
-        }
-
-        // TODO: In case of an error in one of the files, they should all be reverted.
-        res.into_iter()
-            .collect::<Result<Vec<()>, FileBumpError>>()
-            .map(|_| ())
+    let mut res: Vec<Result<String, FileBumpError>> = vec![];
+    for (file_path, file_config) in files {
+        res.push(replace_file_content(
+            current_version,
+            new_version,
+            last_stable_version,
+            file_config
+                .search
+                .as_ref()
+                .unwrap_or(&"{current_version}".to_owned()),
+            file_config
+                .replace
+                .as_ref()
+                .unwrap_or(&"{new_version}".to_owned()),
+            file_path,
+        ));
     }
+
+    // TODO: In case of an error in one of the files, they should all be reverted.
+    res.into_iter()
+        .collect::<Result<Vec<String>, FileBumpError>>()
+        .map(|_| ())
 }
 
-fn replace_version_in_file(
+fn replace_file_content(
     current_version: &core::Version,
     new_version: &core::Version,
+    last_stable_version: Option<&core::Version>,
+    search: &str,
+    replace: &str,
     file_path: &str,
-) -> Result<(), FileBumpError> {
+) -> Result<String, FileBumpError> {
     let content = fs::read_to_string(file_path)?;
-    let replaced_content = content.replace(&current_version.to_string(), &new_version.to_string());
+    let context = template::Context::with_versions(
+        current_version.to_string(),
+        new_version.to_string(),
+        last_stable_version
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "".to_string()),
+    );
+    let replaced_content = template::replace_content(&content, search, replace, &context).unwrap();
     if content == replaced_content {
         Err(FileBumpError::NoOp(format!(
-            "version '{}' not found in file '{}'",
-            current_version, file_path
+            "Nothing changed in file '{}'",
+            file_path
         )))
     } else {
-        fs::write(file_path, replaced_content)?;
-        Ok(())
+        fs::write(file_path, &replaced_content)?;
+        Ok(replaced_content)
     }
 }

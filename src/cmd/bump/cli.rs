@@ -8,6 +8,7 @@ pub fn bump(args: &BumpArgs) {
         Ok(config) => {
             match do_bump(
                 &config.current_version,
+                config.last_stable_version.as_deref(),
                 &config.part,
                 config.new_prerelease,
                 config.finalize_prerelease,
@@ -17,7 +18,7 @@ pub fn bump(args: &BumpArgs) {
                 Ok(version) => {
                     println!("Bumped to version: '{}'", version);
                     match config.original_config.unwrap().update(&version) {
-                        Ok(()) => std::process::exit(0),
+                        Ok(_) => std::process::exit(0),
                         Err(err) => {
                             println!("Error updating the configuration file: {:?}", err);
                             std::process::exit(2);

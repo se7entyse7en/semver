@@ -21,8 +21,33 @@ struct RawConfig {
     prerelease: Option<PrereleaseConfig>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct FileConfig {}
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
+pub struct FileConfig {
+    pub search: Option<String>,
+    pub replace: Option<String>,
+}
+
+impl Default for FileConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FileConfig {
+    pub fn new() -> Self {
+        FileConfig {
+            search: None,
+            replace: None,
+        }
+    }
+
+    pub fn with_params(search: String, replace: String) -> Self {
+        FileConfig {
+            search: Some(search),
+            replace: Some(replace),
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PrereleaseConfig {
@@ -84,17 +109,23 @@ impl Config {
         Ok(config)
     }
 
-    pub fn update(self, new_version: &core::Version) -> Result<(), io::Error> {
-        let mut raw_config = self.raw_config;
+    pub fn update(&self, new_version: &core::Version) -> Result<Config, io::Error> {
+        let mut raw_config = self.raw_config.to_owned();
         raw_config.semver.last_stable_version = if new_version.prerelease.is_some() {
-            self.last_stable_version.or(Some(self.current_version))
+            self.last_stable_version
+                .to_owned()
+                .or_else(|| Some(self.current_version.to_owned()))
         } else {
             Some(new_version.to_string())
         };
+
         raw_config.semver.current_version = new_version.to_string();
         let serialized_config = toml::to_string_pretty(&raw_config).unwrap();
-        fs::write(self.path.unwrap(), serialized_config)?;
-        Ok(())
+        match &self.path {
+            Some(path) => fs::write(path, &serialized_config)?,
+            None => (),
+        }
+        Ok(Config::from_str(&serialized_config).unwrap())
     }
 }
 

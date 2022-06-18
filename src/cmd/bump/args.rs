@@ -1,6 +1,7 @@
 use crate::cmd::helpers;
 use crate::{config, core};
 use clap::Args;
+use std::collections::HashMap;
 
 #[derive(Args)]
 pub struct BumpArgs {
@@ -38,11 +39,12 @@ pub struct BumpArgs {
 
 pub struct FinalizedBumpArgs {
     pub current_version: String,
+    pub last_stable_version: Option<String>,
     pub part: core::Part,
     pub new_prerelease: bool,
     pub finalize_prerelease: bool,
     pub bump_prerelease_func: Option<Box<dyn core::ExtensionBumpFunc>>,
-    pub files: Vec<String>,
+    pub files: HashMap<String, config::FileConfig>,
     pub original_config: Option<config::Config>,
 }
 
@@ -65,10 +67,11 @@ impl helpers::FinalizeArgs for BumpArgs {
         let original_config = config.clone();
         FinalizedBumpArgs {
             current_version: config.current_version,
+            last_stable_version: config.last_stable_version,
             part: self.part.to_owned().unwrap_or(config.default_part),
             new_prerelease: self.new_prerelease,
             finalize_prerelease: self.finalize_prerelease,
-            files: config.files.into_keys().collect(),
+            files: config.files,
             bump_prerelease_func: config
                 .bump_prerelease_func
                 .map(|code| helpers::build_bump_func(code).unwrap()),
@@ -84,10 +87,11 @@ impl helpers::FinalizeArgs for BumpArgs {
         ) {
             (Some(current_version), Some(part), Some(file)) => Some(FinalizedBumpArgs {
                 current_version: current_version.to_owned(),
+                last_stable_version: None,
                 part: part.to_owned(),
                 new_prerelease: self.new_prerelease,
                 finalize_prerelease: self.finalize_prerelease,
-                files: vec![file.to_owned()],
+                files: HashMap::from([(file.to_owned(), config::FileConfig::new())]),
                 bump_prerelease_func: None,
                 original_config: None,
             }),
