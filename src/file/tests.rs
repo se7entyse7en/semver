@@ -178,7 +178,7 @@ fn test_replace_files_contents_with_file_config() {
         let files = HashMap::from(["file-1", "file-2", "file-3"].map(|f| {
             (
                 create_versioned_file(test_dir_name, f, &current_version.to_string()).unwrap(),
-                config::FileConfig::with_params(
+                config::FileConfig::with_pattern(
                     r#"Version: '{current_version}'"#.to_string(),
                     r"__VERSION__ = '{new_version}'".to_string(),
                 ),
@@ -196,6 +196,39 @@ fn test_replace_files_contents_with_file_config() {
         assert!(files.keys().all(|fp| {
             let content = fs::read_to_string(fp).unwrap();
             content.contains(&format!("__VERSION__ = '{}'", &new_version.to_string()))
+        }));
+    });
+}
+
+#[test]
+fn test_replace_files_contents_with_file_config_stable_only() {
+    let func_name = "test_replace_files_contents_with_file_config_stable_only";
+    with_test_dir(func_name, |test_dir_name| {
+        let current_version = core::Version::with_values(1, 2, 3, None);
+        let new_version = core::Version::with_values(1, 2, 3, Some("dev.1".to_owned()));
+        let last_stable_version = core::Version::with_values(1, 2, 3, None);
+        let files = HashMap::from(["file-1", "file-2", "file-3"].map(|f| {
+            (
+                create_versioned_file(test_dir_name, f, &current_version.to_string()).unwrap(),
+                config::FileConfig::with_params(
+                    r#"Version: '{current_version}'"#.to_string(),
+                    r"__VERSION__ = '{new_version}'".to_string(),
+                    true,
+                ),
+            )
+        }));
+        assert_eq!(
+            replace_files_contents(
+                &current_version,
+                &new_version,
+                Some(&last_stable_version),
+                &files
+            ),
+            Ok(())
+        );
+        assert!(files.keys().all(|fp| {
+            let content = fs::read_to_string(fp).unwrap();
+            content.contains(&format!("Version: '{}'", &current_version.to_string()))
         }));
     });
 }

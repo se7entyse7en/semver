@@ -111,26 +111,14 @@ replace = "library = {new_version}"
         let mut files: Vec<String> = config.files.keys().cloned().collect();
         files.sort_unstable();
         assert_eq!(files, ["test-1.txt", "test-2.txt", "test-3.txt"]);
-        assert_eq!(
-            config.files.get("test-1.txt"),
-            Some(&FileConfig {
-                search: None,
-                replace: None,
-            })
-        );
-        assert_eq!(
-            config.files.get("test-2.txt"),
-            Some(&FileConfig {
-                search: None,
-                replace: None,
-            })
-        );
+        assert_eq!(config.files.get("test-1.txt"), Some(&FileConfig::new()));
+        assert_eq!(config.files.get("test-2.txt"), Some(&FileConfig::new()));
         assert_eq!(
             config.files.get("test-3.txt"),
-            Some(&FileConfig {
-                search: Some("library = {current_version}".to_owned()),
-                replace: Some("library = {new_version}".to_owned()),
-            })
+            Some(&FileConfig::with_pattern(
+                "library = {current_version}".to_owned(),
+                "library = {new_version}".to_owned()
+            ))
         );
     }
 
@@ -272,26 +260,14 @@ function bump(version) {
         let mut files: Vec<String> = config.files.keys().cloned().collect();
         files.sort_unstable();
         assert_eq!(files, ["test-1.txt", "test-2.txt", "test-3.txt"]);
-        assert_eq!(
-            config.files.get("test-1.txt"),
-            Some(&FileConfig {
-                search: None,
-                replace: None,
-            })
-        );
-        assert_eq!(
-            config.files.get("test-2.txt"),
-            Some(&FileConfig {
-                search: None,
-                replace: None,
-            })
-        );
+        assert_eq!(config.files.get("test-1.txt"), Some(&FileConfig::new()));
+        assert_eq!(config.files.get("test-2.txt"), Some(&FileConfig::new()));
         assert_eq!(
             config.files.get("test-3.txt"),
-            Some(&FileConfig {
-                search: Some("library = {current_version}".to_owned()),
-                replace: Some("library = {new_version}".to_owned()),
-            })
+            Some(&FileConfig::with_pattern(
+                "library = {current_version}".to_owned(),
+                "library = {new_version}".to_owned()
+            ),)
         );
     }
 }

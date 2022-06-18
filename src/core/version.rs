@@ -51,6 +51,11 @@ impl Version {
         }
     }
 
+    pub fn is_stable(&self) -> bool {
+        self.get_extension_part(&ExtensionPart::Prerelease)
+            .is_none()
+    }
+
     fn extract_part<T: str::FromStr>(caps: &regex::Captures, part: &Part) -> Option<T> {
         match caps.name(&part.to_string()) {
             Some(found) => found.as_str().parse::<T>().ok(),
