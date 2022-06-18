@@ -166,6 +166,15 @@ Given that the current version is `1.0.0` the object that will be passed is:
 
 The value returned by the `bump` function will be used for the `prerelease` part.
 
+In some cases you want to support prereleases only for certain files. In this case you can add the `stable_only = true` param to the file configuration:
+```
+[semver.files."test-1.txt"]
+stable_only = true
+```
+
+By doing this, `test-1.txt` won't be bumped when the part is `prerelease`.
+
+
 ### Start a new prerelease
 
 Let's say that we're currently at version `1.0.0` and we want to start a new prerelease for the next minor version. According to our example `bump_script` that would be `1.1.0-dev.1`. In order to do so we run the following:
