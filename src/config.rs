@@ -25,6 +25,7 @@ struct RawConfig {
 pub struct FileConfig {
     pub search: Option<String>,
     pub replace: Option<String>,
+    pub stable_only: Option<bool>,
 }
 
 impl Default for FileConfig {
@@ -38,13 +39,31 @@ impl FileConfig {
         FileConfig {
             search: None,
             replace: None,
+            stable_only: None,
         }
     }
 
-    pub fn with_params(search: String, replace: String) -> Self {
+    pub fn with_stable_only() -> Self {
+        FileConfig {
+            search: None,
+            replace: None,
+            stable_only: Some(true),
+        }
+    }
+
+    pub fn with_pattern(search: String, replace: String) -> Self {
         FileConfig {
             search: Some(search),
             replace: Some(replace),
+            stable_only: None,
+        }
+    }
+
+    pub fn with_params(search: String, replace: String, stable_only: bool) -> Self {
+        FileConfig {
+            search: Some(search),
+            replace: Some(replace),
+            stable_only: Some(stable_only),
         }
     }
 }
