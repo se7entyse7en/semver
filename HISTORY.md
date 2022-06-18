@@ -13,6 +13,7 @@
 
 - The `validate` subcommand supports prereleases
 - The `--part` cmd arg is now checked against the set of possible values instead of being an arbitrary string
+- [internal] Dogfood `semver` :tada:
 
 ### Removed
 
