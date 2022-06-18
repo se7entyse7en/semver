@@ -139,6 +139,7 @@ impl Config {
         };
 
         raw_config.semver.current_version = new_version.to_string();
+        // TODO: serialization to TOML doesn't preserve the order
         let serialized_config = toml::to_string_pretty(&raw_config).unwrap();
         match &self.path {
             Some(path) => fs::write(path, &serialized_config)?,
