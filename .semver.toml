@@ -1,0 +1,35 @@
+[semver]
+current_version = '0.2.0-dev.6'
+last_stable_version = '0.1.0'
+default_part = 'minor'
+
+[semver.files."Cargo.toml"]
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[semver.files."Cargo.lock"]
+search = '''
+[[package]]
+name = "semver"
+version = "{current_version}"'''
+replace = '''
+[[package]]
+name = "semver"
+version = "{new_version}"'''
+
+[semver.files."HISTORY.md"]
+stable_only = true
+search = '## Unreleased'
+replace = '''
+## Unreleased
+
+## [v{new_version} - {utc_today_ymd}](https://github.com/se7entyse7en/semver/compare/v{last_stable_version}...v{new_version})'''
+
+[semver.prerelease]
+bump_script = '''
+var PREFIX = "dev.";
+function bump(version) {
+  var counter = !version.prerelease ? 0 : parseInt(version.prerelease.slice(PREFIX.length));
+  return `${PREFIX}${counter + 1}`;
+}
+'''
