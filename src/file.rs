@@ -34,20 +34,24 @@ pub fn replace_files_contents(
 ) -> Result<(), FileBumpError> {
     let mut res: Vec<Result<String, FileBumpError>> = vec![];
     for (file_path, file_config) in files {
-        res.push(replace_file_content(
-            current_version,
-            new_version,
-            last_stable_version,
-            file_config
-                .search
-                .as_ref()
-                .unwrap_or(&"{current_version}".to_owned()),
-            file_config
-                .replace
-                .as_ref()
-                .unwrap_or(&"{new_version}".to_owned()),
-            file_path,
-        ));
+        let is_stable = new_version.is_stable();
+        let stable_only = file_config.stable_only.unwrap_or(false);
+        if is_stable || !stable_only {
+            res.push(replace_file_content(
+                current_version,
+                new_version,
+                last_stable_version,
+                file_config
+                    .search
+                    .as_ref()
+                    .unwrap_or(&"{current_version}".to_owned()),
+                file_config
+                    .replace
+                    .as_ref()
+                    .unwrap_or(&"{new_version}".to_owned()),
+                file_path,
+            ));
+        }
     }
 
     // TODO: In case of an error in one of the files, they should all be reverted.
