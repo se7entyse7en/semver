@@ -127,14 +127,14 @@ impl<'a> VersionManager<'a> {
         match part {
             Part::Core(CorePart::Major) => Ok(Version {
                 major: self.core_major_bumper.bump(version)?,
-                minor: version.minor,
-                patch: version.patch,
+                minor: 0,
+                patch: 0,
                 prerelease: version.prerelease.to_owned(),
             }),
             Part::Core(CorePart::Minor) => Ok(Version {
                 major: version.major,
                 minor: self.core_minor_bumper.bump(version)?,
-                patch: version.patch,
+                patch: 0,
                 prerelease: version.prerelease.to_owned(),
             }),
             Part::Core(CorePart::Patch) => Ok(Version {

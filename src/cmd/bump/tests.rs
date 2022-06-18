@@ -103,12 +103,12 @@ fn get_test_cases_bump(with_extension: bool) -> Vec<TestCaseBump> {
         TestCaseBump::new(
             v2(),
             Part::Core(CorePart::Major),
-            Ok(Version::with_values(2, 2, 3, None)),
+            Ok(Version::with_values(2, 0, 0, None)),
         ),
         TestCaseBump::new(
             v2(),
             Part::Core(CorePart::Minor),
-            Ok(Version::with_values(1, 3, 3, None)),
+            Ok(Version::with_values(1, 3, 0, None)),
         ),
         TestCaseBump::new(
             v2(),
@@ -216,7 +216,7 @@ fn get_test_cases_bump_new_prerelease(with_extension: bool) -> Vec<TestCaseBump>
             v2(),
             Part::Core(CorePart::Major),
             if with_extension {
-                Ok(Version::with_values(2, 2, 3, Some("dev.1".to_owned())))
+                Ok(Version::with_values(2, 0, 0, Some("dev.1".to_owned())))
             } else {
                 Err(GenericBumpError::Version(VersionError::BumpError(
                     BumpError::MissingBumpScript,
@@ -227,7 +227,7 @@ fn get_test_cases_bump_new_prerelease(with_extension: bool) -> Vec<TestCaseBump>
             v2(),
             Part::Core(CorePart::Minor),
             if with_extension {
-                Ok(Version::with_values(1, 3, 3, Some("dev.1".to_owned())))
+                Ok(Version::with_values(1, 3, 0, Some("dev.1".to_owned())))
             } else {
                 Err(GenericBumpError::Version(VersionError::BumpError(
                     BumpError::MissingBumpScript,
