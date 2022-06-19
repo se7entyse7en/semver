@@ -86,12 +86,12 @@ jobs:
         run: |
           set -eo pipefail
           curl \
-            -H "Accept: application/octet-stream'"\
+            -H "Accept: application/octet-stream"\
             -H "Authorization: token ${GITHUB_TOKEN}" \
             -JLo semver.tar.gz \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/assets/68896247"
           mkdir semver && tar -xzvf semver.tar.gz -C semver
-          echo "${HOME}/semver/target/bins/ubuntu-latest" >> "${GITHUB_PATH}"
+          echo "${GITHUB_WORKSPACE}/semver/target/bins/ubuntu-latest" >> $GITHUB_PATH
           set +eo pipefail
       - name: Bump version
         id: bump_version
@@ -114,11 +114,11 @@ jobs:
               echo "No new version found: bumping current one as a dev version"
               current_is_dev=$(echo "${current_version}" | { grep dev || true; })
               if [ "${current_is_dev}" == "" ]; then
-                semver bump -c src/semver.toml --new-prerelease
+                semver bump -c .semver.toml --new-prerelease
                 new_version=$(cat .semver.toml | grep current_version | head -n 1 | cut -c 20- | rev | cut -c 2- | rev)
                 echo "Started a new prerelease: ${new_version}"
               else
-                semver bump -c src/semver.toml --part prerelease
+                semver bump -c .semver.toml --part prerelease
                 new_version=$(cat .semver.toml | grep current_version | head -n 1 | cut -c 20- | rev | cut -c 2- | rev)
                 echo "Bumped to next prerelease: ${new_version}"
               fi
