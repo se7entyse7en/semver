@@ -116,11 +116,11 @@ jobs:
               if [ "${current_is_dev}" == "" ]; then
                 semver bump -c src/semver.toml --new-prerelease
                 new_version=$(cat .semver.toml | grep current_version | head -n 1 | cut -c 20- | rev | cut -c 2- | rev)
-                echo "Started a new prerelease: ${new_version}
+                echo "Started a new prerelease: ${new_version}"
               else
                 semver bump -c src/semver.toml --part prerelease
                 new_version=$(cat .semver.toml | grep current_version | head -n 1 | cut -c 20- | rev | cut -c 2- | rev)
-                echo Bumped to next prerelease: ${new_version}
+                echo "Bumped to next prerelease: ${new_version}"
               fi
 
               git commit -asm "Bump version: ${current_version} → ${new_version}"
