@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [v0.2.0 - 2022-06-19](https://github.com/se7entyse7en/semver/compare/v0.1.0...v0.2.0)
+
 ### Added
 
 - Added support for prereleases (`bump --new-prerelease/--finalize-prerelease`) with the ability to specify in the configuration the JS code for bumping the prerelease part

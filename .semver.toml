@@ -1,11 +1,7 @@
 [semver]
-current_version = '0.2.0-dev.8'
-last_stable_version = '0.1.0'
+current_version = '0.2.0'
+last_stable_version = '0.2.0'
 default_part = 'minor'
-[semver.files."Cargo.toml"]
-search = 'version = "{current_version}"'
-replace = 'version = "{new_version}"'
-
 [semver.files."Cargo.lock"]
 search = '''
 [[package]]
@@ -23,6 +19,10 @@ replace = '''
 
 ## [v{new_version} - {utc_today_ymd}](https://github.com/se7entyse7en/semver/compare/v{last_stable_version}...v{new_version})'''
 stable_only = true
+
+[semver.files."Cargo.toml"]
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
 
 [semver.prerelease]
 bump_script = '''
