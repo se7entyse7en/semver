@@ -74,12 +74,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-      - name: Install bumpversion
-        run: pip install bumpversion
       - name: Setup git
         run: |
           set -eo pipefail
@@ -87,6 +81,17 @@ jobs:
           git config --global user.email "${GIT_EMAIL}"
           git remote remove origin
           git remote add origin "https://$(echo ${GITHUB_REPOSITORY} | cut -d "/" -f1):${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          set +eo pipefail
+      - name: Download semver
+        run: |
+          set -eo pipefail
+          curl \
+            -H "Accept: application/octet-stream'"\
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -JLo semver.tar.gz \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/assets/68896247"
+          mkdir semver && tar -xzvf semver.tar.gz -C semver
+          echo "${HOME}/semver/target/bins/ubuntu-latest" >> "${GITHUB_PATH}"
           set +eo pipefail
       - name: Bump version
         id: bump_version
@@ -99,28 +104,37 @@ jobs:
             echo "::set-output name=tag_version::${current_version}"
             echo "::set-output name=prerelease::false"
           else
-            current_version=$(bumpversion --dry-run --list patch | grep current_version | cut -c 17-)
+            current_version=$(cat .semver.toml | grep current_version | head -n 1 | cut -c 20- | rev | cut -c 2- | rev)
             latest_tag=$(git describe --tags --abbrev=0)
             if [ "v${current_version}" != "${latest_tag}" ]; then
               echo "Found new bumped version ${current_version}!"
               echo "::set-output name=tag_version::${current_version}"
               echo "::set-output name=prerelease::false"
             else
+              echo "No new version found: bumping current one as a dev version"
               current_is_dev=$(echo "${current_version}" | { grep dev || true; })
               if [ "${current_is_dev}" == "" ]; then
-                new_version=$(bumpversion --dry-run --list dev --no-configured-files --current-version $(bumpversion --dry-run --list minor | grep new_version | cut -c 13-) | grep new_version | cut -c 13-)
+                semver bump -c src/semver.toml --new-prerelease
+                new_version=$(cat .semver.toml | grep current_version | head -n 1 | cut -c 20- | rev | cut -c 2- | rev)
+                echo "Started a new prerelease: ${new_version}
               else
-                new_version=$(bumpversion --dry-run --list dev | grep new_version | cut -c 13-)
+                semver bump -c src/semver.toml --part prerelease
+                new_version=$(cat .semver.toml | grep current_version | head -n 1 | cut -c 20- | rev | cut -c 2- | rev)
+                echo Bumped to next prerelease: ${new_version}
               fi
-              echo "No new version found: bumping current one as a dev version: ${new_version}"
-              make bump-dev
+
+              git commit -asm "Bump version: ${current_version} → ${new_version}"
               echo "::set-output name=tag_version::${new_version}"
               echo "::set-output name=prerelease::true"
             fi
           fi
           set +eo pipefail
       - name: Create Tag
-        run: make tag TAG="${{steps.bump_version.outputs.tag_version}}"
+        run: |
+          set -eo pipefail
+          new_version="${{steps.bump_version.outputs.tag_version}}"
+          git tag -a "v${new_version}" -m "Version ${new_version}";
+          set +eo pipefail
       - name: Publish Branch and Tag
         run: git push origin master && git push origin --tags
 

@@ -1,12 +1,9 @@
 bump-major: PART = major
 bump-minor: PART = minor
 bump-patch: PART = patch
-bump-dev: PART = dev
 
-bump-major bump-minor bump-patch bump-dev:
-	@python bump.py --target $(PART)
+bump-major bump-minor bump-patch:
+	@cargo run -- bump -c .semver.toml --finalize-prerelease
+	@cargo run -- bump -c .semver.toml --part $(PART)
 
-tag:
-	@./tag.sh $(TAG)
-
-.PHONY: bump-major bump-minor bump-patch bump-dev tag act
+.PHONY: bump-major bump-minor bump-patch
