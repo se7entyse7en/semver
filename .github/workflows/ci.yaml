@@ -86,10 +86,8 @@ jobs:
         run: |
           set -eo pipefail
           curl \
-            -H "Accept: application/octet-stream"\
-            -H "Authorization: token ${GITHUB_TOKEN}" \
             -JLo semver.tar.gz \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/assets/68896247"
+            "https://github.com/se7entyse7en/semver/releases/latest/download/ubuntu-latest.tar.gz"
           mkdir semver && tar -xzvf semver.tar.gz -C semver
           echo "${GITHUB_WORKSPACE}/semver/target/bins/ubuntu-latest" >> $GITHUB_PATH
           set +eo pipefail
